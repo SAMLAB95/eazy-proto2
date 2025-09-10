@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EAZY — Proto LITE (sans JavaScript) + Panier/Shortlist</title>
+  <style>
+    :root{--bg:#0a0f1a;--panel:#0f172a;--panel2:#0b1220;--border:#1f2a44;--muted:#94a3b8;--text:#e5e7eb;--white:#ffffff;--green:#10b981}
+    html,body{margin:0;height:100%;background:var(--bg,#000);color:var(--text,#eee);font:14px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif}
+    .wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+    .hdr{position:sticky;top:0;z-index:5;background:#0b1220;border-bottom:1px solid var(--border,#223)}
+    .hdr-ct{display:flex;align-items:center;gap:10px;padding:12px 16px}
+    .logo{width:36px;height:36px;border-radius:10px;background:#1f2937;display:grid;place-items:center;font-weight:800;color:#fff}
+    .tabs{display:flex;gap:8px}
+    .btn{border:1px solid var(--border,#223);background:var(--panel,#111);color:var(--text,#eee);padding:8px 12px;border-radius:10px;font-weight:800;cursor:pointer;user-select:none}
+    .btn.white{background:#fff;color:#000;border-color:#cbd5e1}
+    .btn.on{outline:2px solid #38bdf8;outline-offset:2px}
+    .pill{display:inline-block;border:1px solid #334155;background:var(--panel2,#0b1220);border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800;color:#cbd5e1}
+    .card{border:1px solid var(--border,#223);background:var(--panel,#111);border-radius:18px;box-shadow:0 8px 14px rgba(0,0,0,.12)}
+    .sec{padding:24px 0}
+    .title{font-weight:900;font-size:28px;text-align:center}
+    .hero{font-weight:900;font-size:46px;letter-spacing:-.02em;text-align:center}
+    .hero-p{max-width:760px;margin:8px auto 0;color:#cbd5e1;text-align:center}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .grid{display:grid;gap:14px}
+    .grid-3{grid-template-columns:1fr}
+    @media(min-width:640px){.grid-3{grid-template-columns:repeat(2,1fr)}}
+    @media(min-width:1024px){.grid-3{grid-template-columns:repeat(3,1fr)}}
+    .imgph{height:150px;border:1px solid #334155;border-radius:12px;background:var(--panel2,#0b1220);display:grid;place-items:center;color:#94a3b8;font-weight:800}
+    .meta{color:var(--muted,#9aa);font-size:12px}
+    .price{font-weight:900;font-size:18px;margin-top:6px}
+    .rel{position:relative}
+    .tags{display:flex;gap:6px;position:absolute;top:8px;left:8px}
+    .actions{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0 14px 14px}
+
+    #r-home,#r-catalog,#r-profile,#r-rules{position:absolute;left:-9999px}
+    .page{display:none}
+    #r-home:checked ~ .app .page.home{display:block}
+    #r-catalog:checked ~ .app .page.catalog{display:block}
+    #r-profile:checked ~ .app .page.profile{display:block}
+    #r-rules:checked ~ .app .page.rules{display:block}
+
+    #c-all,#c-cdc,#c-bea,#c-spt,#c-dom,#c-ani{position:absolute;left:-9999px}
+    .cat-title{display:none;text-align:center;font-weight:900;font-size:24px}
+    .tab{display:none}
+    #c-all:checked  ~ .app .cat-title.all, #c-all:checked  ~ .app .tab.all{display:block}
+    #c-cdc:checked  ~ .app .cat-title.cdc, #c-cdc:checked  ~ .app .tab.cdc{display:block}
+    #c-bea:checked  ~ .app .cat-title.bea, #c-bea:checked  ~ .app .tab.bea{display:block}
+    #c-spt:checked  ~ .app .cat-title.spt, #c-spt:checked  ~ .app .tab.spt{display:block}
+    #c-dom:checked  ~ .app .cat-title.dom, #c-dom:checked  ~ .app .tab.dom{display:block}
+    #c-ani:checked  ~ .app .cat-title.ani, #c-ani:checked  ~ .app .tab.ani{display:block}
+
+    .bubbles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;justify-items:center}
+    @media(min-width:640px){.bubbles{grid-template-columns:repeat(6,1fr)}}
+    .bubble{border:1px solid #334155;background:var(--panel2,#0b1220);border-radius:999px;padding:10px 14px;font-weight:900;cursor:pointer;text-align:center}
+    #c-all:checked ~ .app label[for="c-all"],
+    #c-cdc:checked ~ .app label[for="c-cdc"],
+    #c-bea:checked ~ .app label[for="c-bea"],
+    #c-spt:checked ~ .app label[for="c-spt"],
+    #c-dom:checked ~ .app label[for="c-dom"],
+    #c-ani:checked ~ .app label[for="c-ani"]{outline:2px solid #38bdf8;outline-offset:2px}
+
+    #cartToggle{position:absolute;left:-9999px}
+    #cartToggle:checked ~ .app #cartDrawer{display:block}
+    .drawer{position:fixed;inset:0;z-index:20;display:none}
+    .dim{position:absolute;inset:0;background:rgba(0,0,0,.5)}
+    .surface{position:absolute;right:0;top:0;height:100%;width:420px;max-width:92vw;background:var(--bg,#000);border-left:1px solid var(--border,#223);padding:14px;overflow:auto}
+    .cartItem{display:none;border:1px solid var(--border,#223);border-radius:12px;padding:10px;margin:8px 0;background:var(--panel,#111)}
+
+    .shortBtn .on{display:none}
+  </style>
+</head>
+<body>
+  <input type="radio" name="route" id="r-home" checked />
+  <input type="radio" name="route" id="r-catalog" />
+  <input type="radio" name="route" id="r-profile" />
+  <input type="radio" name="route" id="r-rules" />
+
+  <input type="radio" name="cat" id="c-all" checked />
+  <input type="radio" name="cat" id="c-cdc" />
+  <input type="radio" name="cat" id="c-bea" />
+  <input type="radio" name="cat" id="c-spt" />
+  <input type="radio" name="cat" id="c-dom" />
+  <input type="radio" name="cat" id="c-ani" />
+
+  <input type="checkbox" id="cartToggle" />
+
+  <input type="checkbox" id="sh-p1" />
+  <input type="checkbox" id="sh-p2" />
+  <input type="checkbox" id="sh-p3" />
+  <input type="checkbox" id="sh-p4" />
+  <input type="checkbox" id="sh-p5" />
+  <input type="checkbox" id="sh-p6" />
+  <input type="checkbox" id="sh-p7" />
+  <input type="checkbox" id="sh-p8" />
+  <input type="checkbox" id="sh-p9" />
+  <input type="checkbox" id="sh-p10" />
+  <input type="checkbox" id="sh-p11" />
+  <input type="checkbox" id="sh-p12" />
+  <input type="checkbox" id="sh-p13" />
+  <input type="checkbox" id="sh-p14" />
+  <input type="checkbox" id="sh-p15" />
+
+  <div class="app">
+    <header class="hdr">
+      <div class="hdr-ct wrap">
+        <div class="logo">E</div>
+        <div style="font-weight:800">EAZY</div>
+        <div style="flex:1"></div>
+        <div class="tabs">
+          <label class="btn tabBtn home" for="r-home">🏠 Accueil</label>
+          <label class="btn tabBtn catalog" for="r-catalog">🗂️ Catalogue</label>
+          <label class="btn tabBtn profile" for="r-profile">👤 Profil</label>
+          <label class="btn tabBtn rules" for="r-rules">⚖️ Réglementation</label>
+          <label class="btn white" for="cartToggle">🛒 Panier</label>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="page home">
+        <div class="sec wrap">
+          <div class="hero">EAZY</div>
+          <p class="hero-p">Vends sans stock. Zéro limite de ventes. Ta motivation = tes gains.</p>
+          <div class="row" style="align-items:center;justify-content:space-between;margin-top:16px">
+            <div style="font-weight:900">Produits chauds en ce moment</div>
+            <div class="meta">Tri : ventes (7j) + viral</div>
+          </div>
+          <div class="grid grid-3" style="margin-top:12px">
+            <div class="card"><div class="rel" style="padding:10px"><div class="imgph">BEA</div><div class="tags"><span class="pill">Beauté / Soins</span></div><label class="btn white shortBtn" for="sh-p1"><span class="off">Shortlister</span><span class="on">Dans la liste</span></label></div><div style="padding:14px"><div style="font-weight:700">Masque LED Visage Pro</div><div class="price">179,00 €</div></div></div>
+            <div class="card"><div class="rel" style="padding:10px"><div class="imgph">DOM</div><div class="tags"><span class="pill">Domotique</span></div><label class="btn white shortBtn" for="sh-p2"><span class="off">Shortlister</span><span class="on">Dans la liste</span></label></div><div style="padding:14px"><div style="font-weight:700">NanoLight Hex – 9 panneaux</div><div class="price">189,00 €</div></div></div>
+            <div class="card"><div class="rel" style="padding:10px"><div class="imgph">SPT</div><div class="tags"><span class="pill">Sport</span></div><label class="btn white shortBtn" for="sh-p3"><span class="off">Shortlister</span><span class="on">Dans la liste</span></label></div><div style="padding:14px"><div style="font-weight:700">Theragun Prime – Massage</div><div class="price">299,00 €</div></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page catalog">
+        <div class="sec wrap">
+          <div class="title cat-title all">CATALOGUE — TOUT</div>
+          <div class="title cat-title cdc">CATALOGUE — Coup de cœur</div>
+          <div class="title cat-title bea">CATALOGUE — Beauté / Soins perso</div>
+          <div class="title cat-title spt">CATALOGUE — Sport</div>
+          <div class="title cat-title dom">CATALOGUE — Électroménager / Domotique</div>
+          <div class="title cat-title ani">CATALOGUE — Animalerie</div>
+
+          <div class="bubbles" style="margin-top:12px">
+            <label class="bubble" for="c-all">TOUT</label>
+            <label class="bubble" for="c-cdc">Coup de cœur</label>
+            <label class="bubble" for="c-bea">Beauté / Soins perso</label>
+            <label class="bubble" for="c-spt">Sport</label>
+            <label class="bubble" for="c-dom">Domotique</label>
+            <label class="bubble" for="c-ani">Animalerie</label>
+          </div>
+
+          <div class="tab all" style="margin-top:12px">
+            <div class="grid grid-3">
+              <div class="card"><div class="rel" style="padding:10px"><div class="imgph">BEA</div><div class="tags"><span class="pill">Beauté</span></div><label class="btn white shortBtn" for="sh-p1"><span class="off">Shortlister</span><span class="on">Dans la liste</span></label></div><div style="padding:14px"><div style="font-weight:700">Masque LED</div><div class="price">179,00 €</div></div></div>
+              <div class="card"><div class="rel" style="padding:10px"><div class="imgph">DOM</div><div class="tags"><span class="pill">Domotique</span></div><label class="btn white shortBtn" for="sh-p2"><span class="off">Shortlister</span><span class="on">Dans la liste</span></label></div><div style="padding:14px"><div style="font-weight:700">NanoLight Hex</div><div class="price">189,00 €</div></div></div>
+              <div class="card"><div class="rel" style="padding:10px"><div class="imgph">SPT</div><div class="tags"><span class="pill">Sport</span></div><label class="btn white shortBtn" for="sh-p3"><span class="off">Shortlister</span><span class="on">Dans la liste</span></label></div><div style="padding:14px"><div style="font-weight:700">Theragun Prime</div><div class="price">299,00 €</div></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page profile">
+        <div class="sec wrap">
+          <div class="title">PROFIL</div>
+          <div class="row" style="margin-top:12px">
+            <div class="card" style="padding:16px;display:grid;place-items:center;min-width:260px">
+              <div style="width:160px;height:160px;border-radius:999px;border:6px solid #10b981;display:grid;place-items:center;font-weight:900;font-size:28px;color:#eafff7">1 520</div>
+              <div class="meta" style="margin-top:8px">Ventes totales (démo)</div>
+              <div style="margin-top:6px;font-weight:900">Gains estimés : 18 450 €</div>
+            </div>
+            <div class="card" style="padding:16px;flex:1;min-width:320px">
+              <div style="font-weight:800">Ventes du mois</div>
+              <div style="font-weight:900;font-size:28px;margin-top:4px">380</div>
+              <div style="color:#10b981;margin-top:6px;font-size:12px">Amélioration vs mois dernier : +18,6%</div>
+              <div class="row" style="gap:8px;margin-top:10px;font-size:13px;color:#e5e7eb">
+                <div>Ticket moyen : 72,40 €</div>
+                <div>Produits actifs : 126</div>
+                <div>Ventes 7j : 142</div>
+                <div>Top catégorie 7j : Beauté</div>
+              </div>
+            </div>
+            <div class="card" style="padding:16px;min-width:260px">
+              <div class="meta">Vendeur</div>
+              <div style="font-weight:900;font-size:20px;margin-top:2px">Nom Prénom (démo)</div>
+              <div style="margin-top:8px;font-size:13px">Code vendeur : <span style="font-family:monospace;background:#0b1220;border:1px solid #334155;border-radius:6px;padding:2px 6px">EZY-A1B2C3</span></div>
+              <div class="meta" style="margin-top:8px">Astuce : partage toujours ton code pour suivre & commissionner correctement.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="page rules">
+        <div class="sec wrap">
+          <div class="title">RÉGLEMENTATION</div>
+          <div class="card" style="padding:16px;margin-top:10px">
+            <div style="font-weight:800">1) Cadre d'utilisation</div>
+            <div style="height:1px;background:#1f2a44;margin:10px 0"></div>
+            <ul class="meta" style="color:#e5e7eb;font-size:13px;line-height:1.6">
+              <li>Appli réservée aux vendeurs enregistrés (compte + code vendeur).</li>
+              <li>Pas de vente directe : commande saisie par le vendeur avec code vendeur.</li>
+              <li>Respect des CGU et politiques fournisseurs.</li>
+              <li>Fraude/abus ⇒ suspension du compte.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div id="cartDrawer" class="drawer">
+      <label for="cartToggle" class="dim" title="Fermer"></label>
+      <div class="surface">
+        <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:900">Panier — Shortlist</div><label for="cartToggle" class="btn">✕</label></div>
+        <div style="margin-top:10px">
+          <div class="cartItem p1"><div style="font-weight:700">Masque LED Visage Pro</div><div class="meta">179,00 €</div><label for="sh-p1" class="btn" style="margin-top:6px">Retirer</label></div>
+          <div class="cartItem p2"><div style="font-weight:700">NanoLight Hex – 9 panneaux</div><div class="meta">189,00 €</div><label for="sh-p2" class="btn" style="margin-top:6px">Retirer</label></div>
+          <div class="cartItem p3"><div style="font-weight:700">Theragun Prime – Massage</div><div class="meta">299,00 €</div><label for="sh-p3" class="btn" style="margin-top:6px">Retirer</label></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    #sh-p1:checked  ~ .app label[for="sh-p1"] .off{display:none}  #sh-p1:checked  ~ .app label[for="sh-p1"] .on{display:inline}
+    #sh-p2:checked  ~ .app label[for="sh-p2"] .off{display:none}  #sh-p2:checked  ~ .app label[for="sh-p2"] .on{display:inline}
+    #sh-p3:checked  ~ .app label[for="sh-p3"] .off{display:none}  #sh-p3:checked  ~ .app label[for="sh-p3"] .on{display:inline}
+
+    #sh-p1:checked  ~ .app #cartDrawer .cartItem.p1{display:block}
+    #sh-p2:checked  ~ .app #cartDrawer .cartItem.p2{display:block}
+    #sh-p3:checked  ~ .app #cartDrawer .cartItem.p3{display:block}
+  </style>
+</body>
+</html>
